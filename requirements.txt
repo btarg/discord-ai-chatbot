@@ -1,0 +1,4 @@
+discord
+gpt-2-simple
+asyncio
+python-dotenv
