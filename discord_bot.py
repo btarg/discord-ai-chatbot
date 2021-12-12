@@ -1,7 +1,8 @@
 import os
 import random
 import discord
-import gpt_2_simple as gpt2
+import setuptools
+from aitextgen import aitextgen
 from discord.ext.commands import Bot
 import asyncio
 
@@ -9,11 +10,10 @@ import asyncio
 from dotenv import load_dotenv
 load_dotenv()
 
-from keep_alive import keep_alive
+# Use CPU config because Radeon is silly
+from aitextgen.utils import GPT2ConfigCPU
 
-# Load GPT2 locally (download from Google Drive)
-sess = gpt2.start_tf_sess()
-gpt2.load_gpt2(sess)
+ai = aitextgen(model_folder="trained_model", config=GPT2ConfigCPU())
 
 # Use Bot instead of Discord Client for commands
 client = Bot("!")
@@ -33,6 +33,10 @@ async def generate(ctx):
     else:
         await generateSentence(ctx)
 
+@client.command()
+async def prompt(ctx, string: str):
+    await generateSentence(ctx, prompt=string)
+
 @client.event
 async def on_message(message):
     if message.author == client.user:
@@ -50,10 +54,22 @@ async def on_message(message):
     await client.process_commands(message)
 
 # Actual function to generate AI sentences
-async def generateSentence(ctx, respond_to=None):
+async def generateSentence(ctx, respond_to=None, prompt=""):
     async with ctx.typing():
-        generated = gpt2.generate(sess, return_as_list=True, length=30)[0]
-        single_text = generated.split("\n")[0]
+
+        generated = ai.generate(n=3,
+            batch_size=1,
+            max_length=80,
+            temperature=1.0,
+            top_p=0.9,
+            return_as_list=True,
+            prompt=prompt
+            )
+        print(generated)
+        # Sort by length and choose the first one
+        split_text = generated[0].split("\n")
+        split_text.sort(key=lambda item: (-len(item), item))
+        single_text = split_text[0]
 
     print(single_text)
 
@@ -73,5 +89,4 @@ async def generateTask(ctx):
 
 
 # Run bot
-keep_alive()
 client.run(os.environ["DISCORD_TOKEN"])
