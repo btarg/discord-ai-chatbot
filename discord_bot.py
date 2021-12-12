@@ -3,13 +3,13 @@ import random
 import discord
 import gpt_2_simple as gpt2
 from discord.ext.commands import Bot
-from discord.ext import tasks
 import asyncio
 
 # Get credentials for local running
 from dotenv import load_dotenv
-
 load_dotenv()
+
+from keep_alive import keep_alive
 
 # Load GPT2 locally (download from Google Drive)
 sess = gpt2.start_tf_sess()
@@ -73,4 +73,5 @@ async def generateTask(ctx):
 
 
 # Run bot
+keep_alive()
 client.run(os.environ["DISCORD_TOKEN"])
